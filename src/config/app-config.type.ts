@@ -5,4 +5,5 @@ export type AppConfig = {
   port: number;
   apiPrefix: string;
   debug: boolean;
+  corsOrigin: boolean | string | RegExp | (string | RegExp)[];
 };

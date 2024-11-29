@@ -7,12 +7,12 @@ import { AuthConfig } from './auth-config.type';
 class EnvironmentVariablesValidator {
   @IsString()
   @IsNotEmpty()
-  AUTH_JWT_SECRET: string;
+  AUTH_ACCESS_TOKEN_SECRET: string;
 
   @IsString()
   @IsNotEmpty()
   @IsMs()
-  AUTH_JWT_TOKEN_EXPIRES_IN: string;
+  AUTH_ACCESS_TOKEN_EXPIRES_IN: string;
 
   @IsString()
   @IsNotEmpty()
@@ -47,7 +47,7 @@ export default registerAs<AuthConfig>('auth', () => {
   validateConfig(process.env, EnvironmentVariablesValidator);
 
   return {
-    accessSecret: process.env.AUTH_ACCESS_SECRET,
+    accessSecret: process.env.AUTH_ACCESS_TOKEN_SECRET,
     accessExpireIn: process.env.AUTH_ACCESS_TOKEN_EXPIRES_IN,
     refreshSecret: process.env.AUTH_REFRESH_SECRET,
     refreshExpireIn: process.env.AUTH_REFRESH_TOKEN_EXPIRES_IN,

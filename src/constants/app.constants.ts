@@ -4,6 +4,7 @@ export const IS_AUTH_OPTIONAL = 'isAuthOptional';
 export enum Enviroment {
   LOCAL = 'local',
   DEVELOPMENT = 'development',
+  PRODUCTION = 'production',
 }
 
 export enum Order {

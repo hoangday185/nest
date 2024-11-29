@@ -5,7 +5,7 @@ export function IsMs(validationOptions?: ValidationOptions): PropertyDecorator {
   return (object, propertyName) => {
     registerDecorator({
       propertyName: propertyName as string,
-      name: 'IsMs',
+      name: 'isMs',
       target: object.constructor,
       constraints: [],
       options: validationOptions,

@@ -28,7 +28,6 @@ class EnviromentVariablesValidators {
 export default registerAs<RedisConfig>('redis', () => {
   console.info(`Register AppConfig from environment variables`);
   validateConfig(process.env, EnviromentVariablesValidators);
-
   return {
     host: process.env.REDIS_HOST,
     port: process.env.REDIS_PORT ? parseInt(process.env.REDIS_PORT, 10) : 6379,
