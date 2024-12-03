@@ -10,9 +10,10 @@ import appConfig from './config/app-config';
 import { AllConfigType } from './config/config.type';
 import databaseConfig from './database/config/database-config';
 import { PrismaModule } from './database/prisma.module';
+
+import redisConfig from './Redis/config/redis-config';
 import mailConfig from './mail/config/mail-config';
 import { MailModule } from './mail/mail.module';
-import redisConfig from './Redis/config/redis-config';
 
 @Module({
   imports: [

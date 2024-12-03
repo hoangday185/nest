@@ -23,6 +23,7 @@ RUN pnpm install
 # Bundle app source
 COPY --chown=node:node . .
 
+# Generate Prisma client
 RUN npx prisma generate
 
 # Use the node user from the image (instead of the root user)
@@ -45,7 +46,6 @@ COPY --chown=node:node --from=development /app/nest-cli.json ./nest-cli.json
 RUN pnpm build
 
 # Removes unnecessary packages adn re-install only production dependencies
-RUN npm install -g pnpm
 ENV NODE_ENV production
 RUN pnpm prune --prod
 RUN pnpm install --prod
@@ -62,11 +62,12 @@ WORKDIR /app
 RUN mkdir -p src/generated && chown -R node:node src
 
 # Copy the bundled code from the build stage to the production image
+COPY --chown=node:node --from=builder /app/src/generated/i18n.generated.ts ./src/generated/i18n.generated.ts
 COPY --chown=node:node --from=builder /app/node_modules ./node_modules
 COPY --chown=node:node --from=builder /app/dist ./dist
 COPY --chown=node:node --from=builder /app/package.json ./
 
-
 USER node
+
 # Start the server using the production build
 CMD [ "node", "dist/main.js" ]

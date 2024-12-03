@@ -51,7 +51,6 @@ class EnvironmentVariablesValidator {
 export default registerAs<MailConfig>('mail', () => {
   console.info(`Register MailConfig from environment variables`);
   validateConfig(process.env, EnvironmentVariablesValidator);
-
   return {
     host: process.env.MAIL_HOST,
     port: process.env.MAIL_PORT ? parseInt(process.env.MAIL_PORT, 10) : 587,

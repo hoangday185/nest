@@ -41,9 +41,11 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       error = this.handleHTTPException(exception);
     } else if (exception instanceof PrismaClientKnownRequestError) {
       error = this.handleQueryFailedError(exception);
+    } else {
+      error = this.handleError(exception);
     }
     if (this.debug) {
-      error.stack = exception.stack;
+      error.stack = exception.stack || '';
       error.trace = exception;
 
       this.logger.debug(error);
@@ -150,5 +152,19 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     };
 
     return error.flatMap((error) => extractError(error));
+  }
+
+  private handleError(error: Error): ErrorDto {
+    const statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
+    const errorRes = {
+      timestamp: new Date().toISOString(),
+      statusCode,
+      error: STATUS_CODES[statusCode],
+      message: error?.message || 'An unexpected error occurred',
+    };
+
+    this.logger.error(error);
+
+    return errorRes;
   }
 }

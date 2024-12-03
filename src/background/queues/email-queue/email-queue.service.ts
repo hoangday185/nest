@@ -1,7 +1,7 @@
 import { IVerifyEmailJob } from '@/common/interfaces/job.interface';
 import { MailService } from '@/mail/mail.service';
-import { Logger } from '@nestjs/common';
-
+import { Injectable, Logger } from '@nestjs/common';
+@Injectable()
 export class EmailQueueService {
   private readonly logger = new Logger(EmailQueueService.name);
 

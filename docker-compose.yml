@@ -6,7 +6,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: node dist/main.js
     env_file:
       - .env
     ports:

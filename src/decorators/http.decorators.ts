@@ -33,7 +33,7 @@ interface IApiAuthOptions extends IApiOptions<Type<any>> {
   auths?: ApiAuthType[];
 }
 
-export const ApiPulbic = (options: IApiPublicOptions = {}): MethodDecorator => {
+export const ApiPublic = (options: IApiPublicOptions = {}): MethodDecorator => {
   const defaultStatusCode = HttpStatus.OK;
   const defaultErrorResponses = [
     HttpStatus.BAD_REQUEST,

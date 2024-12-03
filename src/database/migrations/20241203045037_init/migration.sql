@@ -3,6 +3,7 @@ CREATE TABLE `users` (
     `id` VARCHAR(36) NOT NULL,
     `email` VARCHAR(191) NOT NULL,
     `name` VARCHAR(191) NULL,
+    `password` VARCHAR(191) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
@@ -13,7 +14,7 @@ CREATE TABLE `users` (
 
 -- CreateTable
 CREATE TABLE `posts` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `id` VARCHAR(36) NOT NULL,
     `title` VARCHAR(191) NOT NULL,
     `content` VARCHAR(191) NOT NULL,
     `published` BOOLEAN NOT NULL DEFAULT false,
@@ -26,8 +27,8 @@ CREATE TABLE `posts` (
 
 -- CreateTable
 CREATE TABLE `sessions` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `token` VARCHAR(200) NOT NULL,
+    `id` VARCHAR(36) NOT NULL,
+    `hash` VARCHAR(200) NOT NULL,
     `userId` VARCHAR(191) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
