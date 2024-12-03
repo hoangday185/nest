@@ -1,6 +1,6 @@
-export type JwtPayloadType = {
-  id: string;
+export type JwtRefreshPayloadType = {
   sessionId: string;
+  hash: string;
   iat: number;
   exp: number;
 };
