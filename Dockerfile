@@ -26,6 +26,8 @@ COPY --chown=node:node . .
 # Generate Prisma client
 RUN npx prisma generate
 
+##RUN npx prisma db pull
+
 # Use the node user from the image (instead of the root user)
 USER node
 

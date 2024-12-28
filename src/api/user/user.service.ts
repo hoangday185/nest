@@ -28,4 +28,12 @@ export class UserService {
 
     return user.id;
   }
+
+  async getUserById(id: string): Promise<User> {
+    return await this.prismaService.user.findFirst({
+      where: {
+        id,
+      },
+    });
+  }
 }

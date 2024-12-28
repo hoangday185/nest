@@ -22,9 +22,12 @@ import ms from 'ms';
 import { UserService } from '../user/user.service';
 import { LoginReqDto } from './dto/login.dto.req';
 import { LoginResDto } from './dto/login.dto.res';
+import { RefreshTokenReqDto } from './dto/refreshToken.dto.req';
+import { RefreshTokenResDto } from './dto/refreshToken.dto.res';
 import { RegisterReqDto } from './dto/register.dto.req';
 import { RegisterResDto } from './dto/register.dto.res';
 import { JwtPayloadType } from './types/jwt-payload.type';
+import { JwtRefreshPayloadType } from './types/jwt-refresh-payload.type';
 type Token = Branded<
   {
     accessToken: string;
@@ -50,9 +53,20 @@ export class AuthService {
     let payload: JwtPayloadType;
     try {
       payload = await this.jwtService.verifyAsync(accessToken, {
-        secret: this.configService.getOrThrow('app.debug', { infer: true }),
+        secret: this.configService.getOrThrow('auth.accessSecret', {
+          infer: true,
+        }),
       });
     } catch (error) {
+      throw new UnauthorizedException();
+    }
+
+    // Force logout if the session is in the blacklist
+    const isSessionBlacklisted = await this.cacheManager.store.get<boolean>(
+      createCacheKey(CacheKey.SESSION_BLACKLIST, payload.sessionId),
+    );
+
+    if (isSessionBlacklisted) {
       throw new UnauthorizedException();
     }
 
@@ -120,7 +134,6 @@ export class AuthService {
   async login(dto: LoginReqDto): Promise<LoginResDto> {
     const { email, password } = dto;
     const user = await this.userService.getUserByEmail(email);
-    console.log(user);
     const isPasswordValid =
       user && (await verifyPassword(user.password, password));
 
@@ -198,5 +211,67 @@ export class AuthService {
       refreshToken,
       tokenExpires,
     } as Token;
+  }
+
+  async logout(userToken: JwtPayloadType): Promise<void> {
+    //đưa session này vào blacklist với thời gian tồn tại bằng thời gian hiệu lực của token
+    await this.cacheManager.store.set<boolean>(
+      createCacheKey(CacheKey.SESSION_BLACKLIST, userToken.sessionId),
+      true,
+      userToken.exp * 1000 - Date.now(),
+    );
+
+    await this.prismaService.session.delete({
+      where: {
+        id: userToken.sessionId,
+      },
+    });
+  }
+
+  async refreshToken(dto: RefreshTokenReqDto): Promise<RefreshTokenResDto> {
+    const { sessionId, hash } = await this.verifyRefresh(dto.refreshToken);
+    const session = await this.prismaService.session.findFirst({
+      where: {
+        id: sessionId,
+      },
+    });
+
+    if (!session || session.hash !== hash) {
+      throw new UnauthorizedException();
+    }
+
+    const user = await this.userService.getUserById(session.userId);
+
+    const newHash = crypto
+      .createHash('sha256')
+      .update(randomStringGenerator())
+      .digest('hex');
+
+    await this.prismaService.session.update({
+      where: {
+        id: session.id,
+      },
+      data: {
+        hash: newHash,
+      },
+    });
+
+    return await this.createToken({
+      id: user.id,
+      sessionId: session.id,
+      hash: newHash,
+    });
+  }
+
+  private async verifyRefresh(token: string): Promise<JwtRefreshPayloadType> {
+    try {
+      return await this.jwtService.verifyAsync(token, {
+        secret: this.configService.getOrThrow('auth.refreshSecret', {
+          infer: true,
+        }),
+      });
+    } catch (error) {
+      throw new UnauthorizedException();
+    }
   }
 }
