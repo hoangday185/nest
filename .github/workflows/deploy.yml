@@ -13,8 +13,26 @@ jobs:
       - name: Create .env file
         run: echo "${{secrets.ENV_PRODUCTION}}" > .env
       - name: Build docker images
-        run: docker build --platform linux/amd64 -t hoangday185/nestjs:v0 .
+        run: docker compose build
       - name: Login docker hub
         run: docker login -u "${{secrets.DOCKERHUB_USERNAME}}" -p "${{secrets.DOCKERHUB_PASSWORD}}"
       - name: Push docker images
         run: docker push hoangday185/nestjs:v0
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: executing remote ssh commands using password
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.PORT }}
+          script: |
+            docker login -u "${{secrets.DOCKERHUB_USERNAME}}" -p "${{secrets.DOCKERHUB_PASSWORD}}"
+            docker pull hoangday185/nestjs:v0
+            docker stop nestjs || true
+            docker rm nestjs || true
+            docker compose up -d
