@@ -10,12 +10,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.18.0'
       - name: Create .env file
         run: echo "${{secrets.ENV_PRODUCTION}}" > .env
-      - name: Install Dependencies
-      - run: npm install -g pnpm && pnpm install --f
-      - run: npm run build
+      - name: Build docker images
+        run: docker build --platform linux/amd64 -t hoangday185/nestjs:v0 .
+      - name: Login docker hub
+        run: docker login -u "${{secrets.DOCKERHUB_USERNAME}}" -p "${{secrets.DOCKERHUB_PASSWORD}}"
+      - name: Push docker images
+        run: docker push hoangday185/nestjs:v0
