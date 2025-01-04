@@ -1,26 +1,20 @@
-name: GitHub Actions Demo
-run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
+name: Deploy
 on:
   push:
     branches:
       - main
-
-  jobs: 
+jobs:
+  build:
     name: Build
-      build:
-        runs-on: ubuntu-latest
-        strategy:
-          matrix:
-            node-version: ['20.18.0']
-        steps:
-          - name: Checkout code
-          - uses: actions/checkout@v4
-          - name: Use Node.js ${{ matrix.node-version }}
-            uses: actions/setup-node@v4 
-            with:
-                node-version: ${{ matrix.node-version }}
-          - name: Install dependencies
-            run: npm install -g pnpm && pnpm install
-          - name: Build
-            run: pnpm run build
-
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.18.0'
+      - name: Install Dependencies
+        run: npm install -g pnpm && pnpm install
+      - name: Build
+        run: npm run build
