@@ -17,7 +17,7 @@ jobs:
       - name: Login docker hub
         run: docker login -u "${{secrets.DOCKERHUB_USERNAME}}" -p "${{secrets.DOCKERHUB_PASSWORD}}"
       - name: Push docker images
-        run: docker push hoangday185/nestjs:v0
+        run: docker push "${{secrets.DOCKERHUB_USERNAME}}"/nestjs:v0
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
