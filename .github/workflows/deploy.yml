@@ -14,7 +14,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20.18.0'
+      - name: Create .env file
+        run: echo "${{secrets.ENV_PRODUCTION}}" > .env
       - name: Install Dependencies
-        run: npm install -g pnpm && pnpm install
-      - name: Build
-        run: npm run build
+      - run: npm install -g pnpm && pnpm install --f
+      - run: npm run build
