@@ -17,7 +17,7 @@ jobs:
       - name: Login docker hub
         run: docker login -u "${{secrets.DOCKERHUB_USERNAME}}" -p "${{secrets.DOCKERHUB_PASSWORD}}"
       - name: Push docker images
-        run: docker push "${{secrets.DOCKERHUB_USERNAME}}"/nestjs:v0
+        run: docker push hoangday185/nestjs:tagname
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
@@ -32,7 +32,7 @@ jobs:
           port: ${{ secrets.PORT }}
           script: |
             docker login -u "${{secrets.DOCKERHUB_USERNAME}}" -p "${{secrets.DOCKERHUB_PASSWORD}}"
-            docker pull hoangday185/nestjs:v0
+            docker pull hoangday185/nestjs:tagname
             docker stop nestjs || true
             docker rm nestjs || true
             docker compose up -d
