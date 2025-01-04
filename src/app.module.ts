@@ -9,9 +9,11 @@ import { BackgroundModule } from './background/background.module';
 import appConfig from './config/app-config';
 import { AllConfigType } from './config/config.type';
 import databaseConfig from './database/config/database-config';
-import { PrismaModule } from './database/prisma.module';
 
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { DataSource, DataSourceOptions } from 'typeorm';
 import redisConfig from './Redis/config/redis-config';
+import { TypeOrmConfigService } from './database/config/typeorm-config.service';
 import mailConfig from './mail/config/mail-config';
 import { MailModule } from './mail/mail.module';
 
@@ -21,6 +23,17 @@ import { MailModule } from './mail/mail.module';
       isGlobal: true,
       load: [appConfig, redisConfig, authConfig, mailConfig, databaseConfig],
     }),
+    TypeOrmModule.forRootAsync({
+      useClass: TypeOrmConfigService,
+      dataSourceFactory: async (options: DataSourceOptions) => {
+        if (!options) {
+          throw new Error('Invalid options passed');
+        }
+
+        return new DataSource(options).initialize();
+      },
+    }),
+
     BullModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService<AllConfigType>) => {
@@ -65,7 +78,6 @@ import { MailModule } from './mail/mail.module';
     ApiModule,
     BackgroundModule,
     MailModule,
-    PrismaModule,
   ],
 })
 export class AppModule {}

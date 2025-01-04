@@ -13,7 +13,6 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { ValidationError } from 'class-validator';
 import { Response } from 'express';
 import { STATUS_CODES } from 'http';
@@ -39,8 +38,6 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       error = this.handleValidationException(exception);
     } else if (exception instanceof HttpException) {
       error = this.handleHTTPException(exception);
-    } else if (exception instanceof PrismaClientKnownRequestError) {
-      error = this.handleQueryFailedError(exception);
     } else {
       error = this.handleError(exception);
     }
@@ -52,24 +49,6 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     }
 
     response.status(error.statusCode).json(error);
-  }
-
-  private handleQueryFailedError(
-    exception: PrismaClientKnownRequestError,
-  ): ErrorDto {
-    const r = exception as PrismaClientKnownRequestError;
-
-    const statusCode = HttpStatus.BAD_REQUEST;
-
-    const errorRes = {
-      timestamp: new Date().toISOString(),
-      statusCode,
-      error: STATUS_CODES[statusCode],
-      message: r.message,
-      errorCode: r.code,
-    };
-
-    return errorRes;
   }
 
   private handleHTTPException(exception: HttpException): ErrorDto {

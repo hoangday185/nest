@@ -4,21 +4,24 @@ import { AllConfigType } from '@/config/config.type';
 import { CacheKey } from '@/constants/cache.constants';
 import { ErrorCode } from '@/constants/error-code.constants';
 import { JobName, QueueName } from '@/constants/job.constants';
-import { PrismaService } from '@/database/prisma.service';
 import { ValidationException } from '@/exceptions/validation.exception';
 import { createCacheKey } from '@/utils/cache.util';
-import { hashPassword, verifyPassword } from '@/utils/password.util';
+import { verifyPassword } from '@/utils/password.util';
 import { InjectQueue } from '@nestjs/bullmq';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
 import { Queue } from 'bullmq';
 import { Cache } from 'cache-manager';
 import { plainToInstance } from 'class-transformer';
 import crypto from 'crypto';
 import ms from 'ms';
+import { Repository } from 'typeorm';
+import { Session } from '../user/entities/sessions.entity';
+import { User } from '../user/entities/user.entity';
 import { UserService } from '../user/user.service';
 import { LoginReqDto } from './dto/login.dto.req';
 import { LoginResDto } from './dto/login.dto.res';
@@ -40,11 +43,14 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService<AllConfigType>,
     private readonly userService: UserService,
-    private readonly prismaService: PrismaService,
     @Inject(CACHE_MANAGER)
     private readonly cacheManager: Cache,
     @InjectQueue(QueueName.EMAIL)
     private readonly emailQueue: Queue<IEmailJob, any, string>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+    @InjectRepository(Session)
+    private readonly sessionRepository: Repository<Session>,
   ) {}
   async verifyAccessToken(accessToken: string): Promise<JwtPayloadType> {
     let payload: JwtPayloadType;
@@ -62,19 +68,21 @@ export class AuthService {
   async register(dto: RegisterReqDto): Promise<RegisterResDto> {
     //check email is exist
 
-    const user = await this.userService.getUserByEmail(dto.email);
+    const isExistsUser = await this.userRepository.exists({
+      where: { email: dto.email },
+    });
 
-    if (user) {
+    if (isExistsUser) {
       throw new ValidationException(ErrorCode.E003);
     }
 
-    const hashPass = await hashPassword(dto.password);
-    const userId = await this.userService.create({
-      ...dto,
-      password: hashPass,
-    });
+    const user = new User();
+    user.email = dto.email;
+    user.password = dto.password;
 
-    const token = await this.createVerificationToken(userId);
+    await this.userRepository.save(user);
+
+    const token = await this.createVerificationToken(user.id);
     const tokenExpiresIn = this.configService.getOrThrow(
       'auth.confirmEmailExpireIn',
       {
@@ -82,7 +90,7 @@ export class AuthService {
       },
     );
     await this.cacheManager.set(
-      createCacheKey(CacheKey.EMAIL_VERIFICATION, userId),
+      createCacheKey(CacheKey.EMAIL_VERIFICATION, user.id),
       token,
       ms(tokenExpiresIn),
     );
@@ -97,7 +105,7 @@ export class AuthService {
     );
 
     return plainToInstance(RegisterResDto, {
-      userId: userId,
+      userId: user.id,
     });
   }
 
@@ -119,8 +127,10 @@ export class AuthService {
 
   async login(dto: LoginReqDto): Promise<LoginResDto> {
     const { email, password } = dto;
-    const user = await this.userService.getUserByEmail(email);
-    console.log(user);
+    const user = await this.userRepository.findOne({
+      where: { email },
+    });
+
     const isPasswordValid =
       user && (await verifyPassword(user.password, password));
 
@@ -132,12 +142,12 @@ export class AuthService {
       .createHash('sha256')
       .update(randomStringGenerator())
       .digest('hex');
-    const session = await this.prismaService.session.create({
-      data: {
-        hash,
-        userId: user.id,
-      },
-    });
+
+    const session = new Session();
+    session.hash = hash;
+    session.userId = user.id;
+
+    await this.sessionRepository.save(session);
 
     const token = await this.createToken({
       sessionId: session.id,

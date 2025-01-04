@@ -24,7 +24,7 @@ RUN pnpm install
 COPY --chown=node:node . .
 
 # Generate Prisma client
-RUN npx prisma generate
+# RUN npx prisma generate
 
 # Use the node user from the image (instead of the root user)
 USER node
@@ -62,7 +62,6 @@ WORKDIR /app
 RUN mkdir -p src/generated && chown -R node:node src
 
 # Copy the bundled code from the build stage to the production image
-COPY --chown=node:node --from=builder /app/src/generated/i18n.generated.ts ./src/generated/i18n.generated.ts
 COPY --chown=node:node --from=builder /app/node_modules ./node_modules
 COPY --chown=node:node --from=builder /app/dist ./dist
 COPY --chown=node:node --from=builder /app/package.json ./
